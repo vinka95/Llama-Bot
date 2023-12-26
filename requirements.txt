@@ -1,6 +1,4 @@
-faiss-cpu
-json
 langchain
 openai
-urllib.request
 xml.etree.ElementTree
+urllib.request

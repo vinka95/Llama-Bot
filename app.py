@@ -10,9 +10,7 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 )
-import streamlit as st
 import os
-
 
 load_dotenv()
 
@@ -21,6 +19,8 @@ openai_embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def create_docs(filename="papers.txt"):
+    """Loads the processed text file, splits text into chunks for easier loading and creates a vectorstore using FAISS module
+    """
     loader = TextLoader(filename)
     papers_text = loader.load()
     
@@ -32,45 +32,45 @@ def create_docs(filename="papers.txt"):
 
 
 def ask_chatbot(question, papers_db, k=2):
-    
+    """Main ChatBot functionality, takes in a query and answers the query with the local context provided through SOTA papers on LLama2.
+
+    Args:
+        question (_type_): query text
+        papers_db (_type_): Vectorstore object of papers text
+        k (int, optional): No of Most Similar Docs to be considered, Defaults to 2.
+
+    Returns:
+        _type_: _description_
+    """
     paper_docs = papers_db.similarity_search(question, k=k)
     docs_page_content = " ".join([d.page_content for d in paper_docs])
-    
+
+    # Chat model instance is created
     chat = ChatOpenAI(temperature=0, openai_api_key=os.getenv("OPENAI_API_KEY"))
     
+    # Chat prompt is designed using prompt templates
     template = ( "You are a helpful assistant that can answer questions on Llama 2, based on a set of papers from Arxiv." )
     system_message_prompt = SystemMessagePromptTemplate.from_template(template)
     human_template = "{text}"
     human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
     
     chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt] )
-    # chat_prompt = chat_prompt.format_prompt(text=question).to_messages()
     
+    # Create an LLMChain 
     chain = LLMChain(llm=chat, prompt=chat_prompt)
-
-    # response = chat(chat_prompt.format_prompt(text=question).to_messages())
     
     response = chain.run(text=question, docs=docs_page_content)
-    
-    print(response)
-
     return response
 
-st.title("Ask me anything on Llama 2")
 
+# Function Calls
 papers_db = create_docs()
 
-form = st.form("chat_form")
-form.write("Inside the form")
 
-# question = st.text_input("You can write your questions and hit Enter to know more about Llama2!", key="input")    
+# Enter specific questions related that you have on the topic of Llama
+# --------------------REPLACE YOUR QUESTION HERE----------------------------------#
+question = "Name at least 5 domain-specific LLMs that have been created by fine-tuning Llama-2."
 
-   # Every form must have a submit button.
-# submitted = st.form_submit_button("Submit")
-   
-# if submitted:
-# response = ask_chatbot(question, papers_db)
-    #    response = response.replace("\n", "")
-    #    st.text_area("Response:", value=response)
+response = ask_chatbot(question, papers_db)
 
-st.write("Outside the form")
+print(response)

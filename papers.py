@@ -1,11 +1,10 @@
 import urllib.request
 import xml.etree.ElementTree as ET
-import faiss
-import numpy as np
-import json
 
 
 def fetch_papers():
+    """Method to fetch SOTA papers on Llama from Arxiv
+    """
     url = 'http://export.arxiv.org/api/query?search_query=ti:llama&start=0&max_results=70'
     response = urllib.request.urlopen(url)
     data = response.read().decode('utf-8')
@@ -21,6 +20,8 @@ def fetch_papers():
 
 
 def save_papers_to_file(papers, filename="papers.txt"):
+    """Saves paper text data to text file for further processing
+    """
     with open(filename, 'w', encoding='utf-8') as file:
         for paper in papers:
             file.write(f"Title: {paper['title']}\n")
@@ -29,41 +30,15 @@ def save_papers_to_file(papers, filename="papers.txt"):
             
             
 def load_papers_from_file(filename="papers.txt"):
-    
+    """ Loads text data """
     papers_file = open(filename, "r")
     papers_data = papers_file.read()
             
     return papers_data
-            
-            
-def generate_embeddings(papers, openai_embeddings):
-    
-    embeddings = []
-    
-    for paper in papers:
-        embedding = openai_embeddings.embed_query(paper['title'] + paper['summary'])
-        embeddings.append(embedding)
-    return embeddings
-
-
-def create_faiss_index(embeddings):
-    dimension = len(embeddings[0])  # Get the dimension of the embeddings
-    index = faiss.IndexFlatL2(dimension)  # Use IndexFlatL2 for L2 distance (Euclidean)
-    
-    # FAISS expects numpy arrays in float32
-    embeddings_np = np.array(embeddings).astype('float32')
-    index.add(embeddings_np)  # Add embeddings to the index
-
-    return index
-
-
 
 
 # Fetch and print a sample of the papers
 papers = fetch_papers()
 
-
 # Print a confirmation message
 print("Papers saved to 'papers_data.json'")
-
-
